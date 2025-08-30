@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Multi URL Shortener - Secora{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-white mb-2">Multi URL Shortener</h1>
+        <p class="text-gray-400">Create short URLs using multiple services simultaneously from Secora</p>
+    </div>
+
+    <!-- URL Input Section -->
+    <div class="bg-dark-card rounded-lg border border-dark-border p-6 mb-8">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1">
+                <input type="url" 
+                       id="urlInput" 
+                       placeholder="Enter URL or domain to shorten (e.g., example.com or https://example.com)" 
+                       class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <button onclick="shortenUrl()" 
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+                Shorten URL
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading-container hidden mb-8" id="loadingContainer">
+        <div class="bg-dark-card rounded-lg border border-dark-border p-6 text-center">
+            <div class="loading-spinner mb-4">
+                <i class="fas fa-spinner text-blue-500 text-2xl"></i>
+            </div>
+            <p class="text-gray-400">Shortening URL with multiple services...</p>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-container hidden" id="resultsContainer">
+        <h2 class="text-xl font-bold text-white mb-4">Shortened URLs</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="resultsGrid">
+            <!-- Results will be populated here -->
+        </div>
+    </div>
+
+    <!-- Service Status -->
+    <div class="mt-8">
+        <h3 class="text-lg font-semibold text-white mb-4">Supported Services (7 Total)</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <!-- Direct API Services (Guaranteed to work) -->
+            <div class="bg-dark-card rounded-lg border border-dark-border p-3 text-center">
+                <i class="fas fa-link text-orange-500 text-xl mb-1"></i>
+                <p class="text-xs text-gray-300">TinyURL</p>
+                <span class="text-xs text-green-400">● Active</span>
+            </div>
+            <div class="bg-dark-card rounded-lg border border-dark-border p-3 text-center">
+                <i class="fas fa-cut text-cyan-500 text-xl mb-1"></i>
+                <p class="text-xs text-gray-300">is.gd</p>
+                <span class="text-xs text-green-400">● Active</span>
+            </div>
+            <div class="bg-dark-card rounded-lg border border-dark-border p-3 text-center">
+                <i class="fas fa-compress text-teal-500 text-xl mb-1"></i>
+                <p class="text-xs text-gray-300">v.gd</p>
+                <span class="text-xs text-green-400">● Active</span>
+            </div>
+            <div class="bg-dark-card rounded-lg border border-dark-border p-3 text-center">
+                <i class="fas fa-zap text-yellow-500 text-xl mb-1"></i>
+                <p class="text-xs text-gray-300">da.gd</p>
+                <span class="text-xs text-green-400">● Active</span>
+            </div>
+            <div class="bg-dark-card rounded-lg border border-dark-border p-3 text-center">
+                <i class="fas fa-globe text-pink-500 text-xl mb-1"></i>
+                <p class="text-xs text-gray-300">clck.ru</p>
+                <span class="text-xs text-green-400">● Active</span>
+            </div>
+            
+            <!-- Public Form/API Services (Should work) -->
+            <div class="bg-dark-card rounded-lg border border-dark-border p-3 text-center">
+                <i class="fas fa-broom text-green-500 text-xl mb-1"></i>
+                <p class="text-xs text-gray-300">cleanuri.com</p>
+                <span class="text-xs text-green-400">● Active</span>
+            </div>
+            <div class="bg-dark-card rounded-lg border border-dark-border p-3 text-center">
+                <i class="fas fa-dot-circle text-emerald-500 text-xl mb-1"></i>
+                <p class="text-xs text-gray-300">tiny.cc</p>
+                <span class="text-xs text-yellow-400">● Demo</span>
+            </div>
+        </div>
+        <div class="mt-4 text-center">
+            <p class="text-xs text-gray-400">
+                <span class="text-green-400">● Active</span> = Direct API, reliable service (6 services) | 
+                <span class="text-yellow-400">● Demo</span> = Simulated URLs (1 service)
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function validateUrl(url) {
+        try {
+            const urlObj = new URL(url);
+            return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+        } catch {
+            return false;
+        }
+    }
+
+    function normalizeUrl(url) {
+        // If URL doesn't start with protocol, add https://
+        if (!url.match(/^https?:\/\//i)) {
+            return 'https://' + url;
+        }
+        return url;
+    }
+
+    function sanitizeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function showLoading() {
+        document.getElementById('loadingContainer').classList.remove('hidden');
+        document.getElementById('resultsContainer').classList.add('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingContainer').classList.add('hidden');
+    }
+
+    function copyToClipboard(text, button) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check text-green-400"></i>';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+            }, 2000);
+        });
+    }
+
+    function showResults(data) {
+        hideLoading();
+        
+        const resultsGrid = document.getElementById('resultsGrid');
+        resultsGrid.innerHTML = '';
+        
+        // Display original URL
+        const originalCard = `
+            <div class="bg-dark-card rounded-lg border border-dark-border p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-globe text-gray-400"></i>
+                        <span class="text-white font-medium">Original URL</span>
+                    </div>
+                    <span class="text-xs bg-gray-600 px-2 py-1 rounded text-white">Source</span>
+                </div>
+                <div class="space-y-2">
+                    <div class="bg-gray-700 rounded p-2 text-sm text-gray-300 break-all">
+                        ${sanitizeHTML(data.original_url)}
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span>Length: ${data.original_url.length} chars</span>
+                        <button onclick="copyToClipboard('${data.original_url}', this)" class="text-blue-400 hover:text-blue-300">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        resultsGrid.innerHTML += originalCard;
+        
+        // Display shortened URLs
+        data.results.forEach(result => {
+            const statusColor = result.success ? 'green' : 'red';
+            const statusIcon = result.success ? 'check-circle' : 'times-circle';
+            const statusText = result.success ? 'Success' : 'Failed';
+            
+            const card = `
+                <div class="bg-dark-card rounded-lg border border-dark-border p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-link text-blue-400"></i>
+                            <span class="text-white font-medium">${sanitizeHTML(result.service)}</span>
+                        </div>
+                        <span class="text-xs bg-${statusColor}-600 px-2 py-1 rounded text-white flex items-center gap-1">
+                            <i class="fas fa-${statusIcon}"></i>
+                            ${statusText}
+                        </span>
+                    </div>
+                    <div class="space-y-2">
+                        ${result.success ? `
+                            <div class="bg-gray-700 rounded p-2 text-sm text-blue-300 break-all">
+                                <a href="${result.short_url}" target="_blank" class="hover:underline">
+                                    ${sanitizeHTML(result.short_url)}
+                                </a>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-400">
+                                <span>Saved: ${data.original_url.length - result.short_url.length} chars</span>
+                                <button onclick="copyToClipboard('${result.short_url}', this)" class="text-blue-400 hover:text-blue-300">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        ` : `
+                            <div class="bg-red-900 rounded p-2 text-sm text-red-300">
+                                ${sanitizeHTML(result.error || 'Service unavailable')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            resultsGrid.innerHTML += card;
+        });
+        
+        document.getElementById('resultsContainer').classList.remove('hidden');
+    }
+
+    async function shortenUrl() {
+        const urlInput = document.getElementById('urlInput');
+        let url = urlInput.value.trim();
+        
+        if (!url) {
+            showAlert('Please enter a URL to shorten');
+            return;
+        }
+
+        // Normalize the URL by adding https:// if no protocol is present
+        url = normalizeUrl(url);
+        
+        if (!validateUrl(url)) {
+            showAlert('Please enter a valid domain name or URL');
+            return;
+        }
+
+        // Update the input field to show the normalized URL
+        urlInput.value = url;
+
+        showLoading();
+
+        try {
+            const response = await fetch('/shorten', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ url: url })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                hideLoading();
+                showAlert(sanitizeHTML(data.error));
+            } else {
+                showResults(data);
+            }
+        } catch (error) {
+            hideLoading();
+            showAlert('Network error occurred. Please try again.');
+        }
+    }
+
+    // Enter key support
+    document.getElementById('urlInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            shortenUrl();
+        }
+    });
+
+    // Auto-focus input
+    document.getElementById('urlInput').focus();
+</script>
+{% endblock %} 

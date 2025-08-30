@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40" height="40">
+  <!-- Blue gradient background circle -->
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#bgGrad)" stroke="#1e40af" stroke-width="2"/>
+  
+  <!-- Network hub design -->
+  <!-- Center node -->
+  <circle cx="50" cy="50" r="6" fill="#1e293b"/>
+  
+  <!-- Main connection lines -->
+  <line x1="50" y1="50" x2="50" y2="25" stroke="#1e293b" stroke-width="3"/>
+  <line x1="50" y1="50" x2="75" y2="50" stroke="#1e293b" sstroke-width="3"/>
+  <line x1="50" y1="50" x2="50" y2="75" stroke="#1e293b" stroke-width="3"/>
+  <line x1="50" y1="50" x2="25" y2="50" stroke="#1e293b" stroke-width="3"/>
+  
+  <!-- Diagonal connections -->
+  <line x1="50" y1="50" x2="68" y2="32" stroke="#1e293b" stroke-width="2"/>
+  <line x1="50" y1="50" x2="68" y2="68" stroke="#1e293b" stroke-width="2"/>
+  <line x1="50" y1="50" x2="32" y2="68" stroke="#1e293b" stroke-width="2"/>
+  <line x1="50" y1="50" x2="32" y2="32" stroke="#1e293b" stroke-width="2"/>
+  
+  <!-- Outer nodes -->
+  <circle cx="50" cy="25" r="4" fill="#1e293b"/>
+  <circle cx="75" cy="50" r="4" fill="#1e293b"/>
+  <circle cx="50" cy="75" r="4" fill="#1e293b"/>
+  <circle cx="25" cy="50" r="4" fill="#1e293b"/>
+  
+  <!-- Diagonal nodes -->
+  <circle cx="68" cy="32" r="3" fill="#1e293b"/>
+  <circle cx="68" cy="68" r="3" fill="#1e293b"/>
+  <circle cx="32" cy="68" r="3" fill="#1e293b"/>
+  <circle cx="32" cy="32" r="3" fill="#1e293b"/>
+</svg> 

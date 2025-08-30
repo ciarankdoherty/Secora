@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Secora - Security Intelligence Platform{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-bg': '#0f172a',
+                        'dark-card': '#1e293b',
+                        'dark-border': '#334155',
+                        'accent-blue': '#3b82f6',
+                        'accent-green': '#10b981',
+                        'accent-red': '#ef4444',
+                        'accent-yellow': '#f59e0b',
+                        'secora-primary': '#3b82f6',
+                        'secora-secondary': '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles to match the original design */
+        .sidebar-nav .nav-item.active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        .lookup-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        .lookup-btn:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+        }
+        .status-card {
+            background: linear-gradient(135deg, #1e293b, #334155);
+        }
+        .intel-card {
+            background: linear-gradient(135deg, #1e293b, #334155);
+        }
+        .loading-spinner i {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-dark-bg text-gray-100 min-h-screen">
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <nav class="bg-dark-card border-b border-dark-border px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2 text-sm text-gray-400">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                    <span>></span>
+                    <span>Security Dashboard</span>
+                </div>
+                <div>
+                    <span class="text-gray-300 font-medium">Secora Intelligence</span>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-dark-card border-r border-dark-border min-h-screen">
+                <div class="p-6">
+                    <div class="flex items-center space-x-3 mb-8">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center">
+                            <img src="{{ url_for('static', filename='secora-logo.svg') }}" alt="Secora Logo" class="w-10 h-10">
+                        </div>
+                        <span class="text-xl font-bold text-white">Secora</span>
+                    </div>
+
+                    <nav class="sidebar-nav space-y-2">
+                        <a href="{{ url_for('index') }}" class="nav-item {{ 'active' if request.endpoint == 'index' else '' }} flex items-center space-x-3 px-4 py-3 rounded-lg text-white cursor-pointer hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-search"></i>
+                            <span>IP Intelligence</span>
+                        </a>
+                        
+                        <a href="{{ url_for('shortener') }}" class="nav-item {{ 'active' if request.endpoint == 'shortener' else '' }} flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors">
+                            <i class="fas fa-link"></i>
+                            <span>Multi URL Shortener</span>
+                        </a>
+                        
+                        <!-- User Authentication Section -->
+                        <div class="pt-4 mt-4 border-t border-gray-600">
+                            {% if current_user.is_authenticated %}
+                                <div class="mb-3 px-4 py-2">
+                                    <p class="text-xs text-gray-400 mb-1">Signed in as</p>
+                                    <p class="text-white font-medium">{{ current_user.username }}</p>
+                                </div>
+                                
+                                <a href="{{ url_for('profile') }}" class="nav-item {{ 'active' if request.endpoint == 'profile' else '' }} flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors">
+                                    <i class="fas fa-user"></i>
+                                    <span>Profile</span>
+                                </a>
+                                
+                                <a href="{{ url_for('history') }}" class="nav-item {{ 'active' if request.endpoint == 'history' else '' }} flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors">
+                                    <i class="fas fa-history"></i>
+                                    <span>Activity History</span>
+                                </a>
+                                
+                                <a href="{{ url_for('logout') }}" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-red-400 hover:bg-gray-700 cursor-pointer transition-colors">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Sign Out</span>
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('login') }}" class="nav-item {{ 'active' if request.endpoint == 'login' else '' }} flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    <span>Sign In</span>
+                                </a>
+                                
+                                <a href="{{ url_for('register') }}" class="nav-item {{ 'active' if request.endpoint == 'register' else '' }} flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Sign Up</span>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-6">
+                <!-- Error Alert -->
+                <div class="alert-container mb-6 hidden" id="alertContainer">
+                    <div class="bg-red-600 border border-red-700 rounded-lg p-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-exclamation-circle text-white"></i>
+                            <span class="text-white" id="alertText">Error fetching alert</span>
+                        </div>
+                        <button class="text-white hover:text-gray-300" onclick="closeAlert()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function closeAlert() {
+            document.getElementById('alertContainer').classList.add('hidden');
+        }
+
+        function showAlert(message) {
+            document.getElementById('alertText').textContent = message;
+            document.getElementById('alertContainer').classList.remove('hidden');
+        }
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

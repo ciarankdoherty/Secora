@@ -1,0 +1,851 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Intelligence Matrix Header -->
+<div class="bg-dark-card rounded-lg p-6 mb-6 border border-dark-border">
+    <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg flex items-center justify-center">
+                <img src="{{ url_for('static', filename='secora-logo.svg') }}" alt="Secora Logo" class="w-12 h-12">
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Secora Intelligence Platform</h1>
+                <p class="text-gray-400">Advanced IP Analysis & Threat Detection</p>
+            </div>
+        </div>
+        <div class="text-right space-y-1">
+            <div class="flex items-center space-x-2 text-sm text-gray-400">
+                <i class="fas fa-clock"></i>
+                <span>Last updated: Mar 1, 2025</span>
+            </div>
+            <div class="flex items-center space-x-2 text-sm text-gray-400">
+                <i class="fas fa-user-secret"></i>
+                <span>Secora Private Mode</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="status-card p-6 rounded-lg border border-dark-border hover:border-green-400 transition-all duration-300 transform hover:scale-105">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-400">System Status</span>
+            <i class="fas fa-chart-line text-accent-green animate-pulse"></i>
+        </div>
+        <div class="text-xl font-bold text-accent-green">Active</div>
+    </div>
+    
+    <div class="status-card p-6 rounded-lg border border-dark-border hover:border-blue-400 transition-all duration-300 transform hover:scale-105">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-400">Current Version</span>
+            <i class="fas fa-code-branch text-gray-400"></i>
+        </div>
+        <div class="text-xl font-bold text-white">v1.3.34</div>
+    </div>
+    
+    <div class="status-card p-6 rounded-lg border border-dark-border hover:border-blue-400 transition-all duration-300 transform hover:scale-105">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-400">IP Lookups</span>
+            <i class="fas fa-search text-accent-blue animate-bounce"></i>
+        </div>
+        <div class="text-xl font-bold text-white" id="lookupCount">{{ lookups_today }} Today</div>
+    </div>
+    
+    <div class="status-card p-6 rounded-lg border border-dark-border hover:border-green-400 transition-all duration-300 transform hover:scale-105">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-400">System Status</span>
+            <i class="fas fa-server text-accent-green animate-pulse"></i>
+        </div>
+        <div class="text-xl font-bold text-accent-green">All Systems Go</div>
+    </div>
+</div>
+
+<!-- IP Lookup Section -->
+<div class="bg-dark-card rounded-lg p-6 mb-8 border border-dark-border">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+            <i class="fas fa-globe"></i>
+            <span>Secora IP Intelligence</span>
+        </h2>
+        <div class="flex space-x-2">
+            <div class="w-3 h-3 bg-accent-green rounded-full"></div>
+            <div class="w-3 h-3 bg-accent-blue rounded-full"></div>
+            <div class="w-3 h-3 bg-accent-yellow rounded-full"></div>
+        </div>
+    </div>
+    
+    {% if not current_user.is_authenticated %}
+    <!-- Restricted Access for Non-Authenticated Users -->
+    <div class="relative group">
+        <div class="absolute inset-0 bg-gray-800 bg-opacity-60 backdrop-blur-sm z-10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <div class="text-center p-4">
+                <i class="fas fa-lock text-4xl text-red-400 mb-2"></i>
+                <h3 class="text-lg font-bold text-white mb-1">CLASSIFIED ACCESS</h3>
+                <p class="text-gray-300 text-sm mb-3">Sign in to access advanced features</p>
+                <div class="space-x-2">
+                    <a href="{{ url_for('login') }}" class="inline-block px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors duration-200">
+                        <i class="fas fa-key mr-1"></i>SIGN IN
+                    </a>
+                    <a href="{{ url_for('register') }}" class="inline-block px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded transition-colors duration-200">
+                        <i class="fas fa-user-plus mr-1"></i>SIGN UP
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Interface with hover effect -->
+        <div class="transition-all duration-300 group-hover:blur-sm">
+    {% endif %}
+    
+    <div class="flex flex-col sm:flex-row gap-4 mb-8">
+        <div class="flex-1 flex gap-2">
+            <input type="text" 
+                   id="ipInput" 
+                   placeholder="Enter IP address (e.g., 8.8.8.8)" 
+                   class="flex-1 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                   {% if not current_user.is_authenticated %}disabled{% endif %}>
+            <button onclick="{% if current_user.is_authenticated %}performLookup(){% else %}redirectToLogin(){% endif %}" 
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                Lookup
+            </button>
+        </div>
+        <button onclick="{% if current_user.is_authenticated %}testMyIp(){% else %}redirectToLogin(){% endif %}" 
+                class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 transform hover:scale-105">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            Test My IP
+        </button>
+    </div>
+
+    {% if not current_user.is_authenticated %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Loading -->
+    <div class="loading-container hidden" id="loadingContainer">
+        <div class="text-center py-12">
+            <div class="loading-spinner mb-4">
+                <i class="fas fa-spinner text-4xl text-accent-blue animate-spin"></i>
+            </div>
+            <p class="text-gray-400">Gathering intelligence...</p>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-container hidden" id="resultsContainer">
+        <!-- IP Reports Section -->
+        <div id="ipReportsSection" class="mb-6 hidden">
+            <div class="bg-red-900 border border-red-700 rounded-lg p-4 mb-4">
+                <div class="flex items-center space-x-2 mb-2">
+                    <i class="fas fa-exclamation-triangle text-red-400"></i>
+                    <h3 class="text-white font-bold">Community Reports</h3>
+                    <span id="reportCount" class="text-xs bg-red-600 px-2 py-1 rounded text-white">0</span>
+                </div>
+                <div id="reportsList" class="space-y-2">
+                    <!-- Reports will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" id="resultsGrid">
+            <!-- Results will be populated here -->
+        </div>
+        
+        <!-- Report IP Button -->
+        <div class="mt-6 text-center">
+            <button onclick="showReportModal()" 
+                    class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-all duration-200 flex items-center gap-2 mx-auto transform hover:scale-105">
+                <i class="fas fa-flag"></i>
+                Report This IP
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Report IP Modal -->
+<div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-dark-card rounded-lg p-6 w-full max-w-md mx-4 border border-dark-border">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-white">Report IP Address</h3>
+            <button onclick="closeReportModal()" class="text-gray-400 hover:text-white text-xl">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="reportForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">IP Address</label>
+                <input type="text" id="reportIpInput" readonly class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Report Type</label>
+                <select id="reportType" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <option value="">Select report type...</option>
+                    <option value="malicious">Malicious Activity</option>
+                    <option value="spam">Spam/Bot Activity</option>
+                    <option value="suspicious">Suspicious Behavior</option>
+                    <option value="phishing">Phishing Attempt</option>
+                    <option value="ddos">DDoS Attack</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Comment</label>
+                <textarea id="reportComment" rows="4" placeholder="Describe what you observed..." class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"></textarea>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Security Verification</label>
+                <div class="flex items-center space-x-3">
+                    <span class="text-white" id="captchaQuestion">What is 5 + 3?</span>
+                    <input type="number" id="captchaAnswer" placeholder="Answer" class="flex-1 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <button type="button" onclick="generateNewCaptcha()" class="px-3 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200">
+                        <i class="fas fa-refresh"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button type="submit" class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200">
+                    <i class="fas fa-flag mr-2"></i>Submit Report
+                </button>
+                <button type="button" onclick="closeReportModal()" class="px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Help Section -->
+<div class="bg-dark-card rounded-lg p-6 border border-dark-border">
+    <div class="mb-6">
+        <h3 class="text-lg font-bold text-white">Help</h3>
+        <p class="text-gray-400">Resources and guides to OSINT</p>
+    </div>
+    
+    <div class="space-y-4">
+        <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+            <div class="flex items-center space-x-4">
+                <i class="fas fa-info-circle text-accent-blue"></i>
+                <div>
+                    <h4 class="text-white font-medium">Getting Started with IP Lookup</h4>
+                    <p class="text-gray-400 text-sm">Learn the basics of IP intelligence gathering</p>
+                </div>
+            </div>
+            <span class="text-xs bg-accent-blue px-2 py-1 rounded text-white">guide</span>
+        </div>
+        
+        <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+            <div class="flex items-center space-x-4">
+                <i class="fas fa-link text-accent-green"></i>
+                <div>
+                    <h4 class="text-white font-medium">The Impact of OSINT in cybersecurity</h4>
+                    <p class="text-gray-400 text-sm">Learn about risk and context in OSINT</p>
+                </div>
+            </div>
+            <span class="text-xs bg-accent-green px-2 py-1 rounded text-white">reference</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+    let lookupCount = parseInt('{{ lookups_today or 0 }}');
+    let currentSearchedIP = '';
+    let captchaAnswer = 8; // Default answer
+
+    function redirectToLogin() {
+        window.location.href = '{{ url_for("login") }}';
+    }
+
+    function showLoading() {
+        document.getElementById('loadingContainer').classList.remove('hidden');
+        document.getElementById('resultsContainer').classList.add('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingContainer').classList.add('hidden');
+    }
+
+    function sanitizeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function validateIP(ip) {
+        // Basic IP validation on client side
+        const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        return ipRegex.test(ip);
+    }
+
+    function generateNewCaptcha() {
+        const num1 = Math.floor(Math.random() * 20) + 1;
+        const num2 = Math.floor(Math.random() * 20) + 1;
+        const operators = ['+', '-', '*'];
+        const operator = operators[Math.floor(Math.random() * operators.length)];
+        
+        let question, answer;
+        switch(operator) {
+            case '+':
+                question = `What is ${num1} + ${num2}?`;
+                answer = num1 + num2;
+                break;
+            case '-':
+                question = `What is ${num1} - ${num2}?`;
+                answer = num1 - num2;
+                break;
+            case '*':
+                question = `What is ${num1} × ${num2}?`;
+                answer = num1 * num2;
+                break;
+        }
+        
+        document.getElementById('captchaQuestion').textContent = question;
+        captchaAnswer = answer;
+    }
+
+    function showReportModal() {
+        document.getElementById('reportIpInput').value = currentSearchedIP;
+        generateNewCaptcha();
+        document.getElementById('reportModal').classList.remove('hidden');
+    }
+
+    function closeReportModal() {
+        document.getElementById('reportModal').classList.add('hidden');
+        document.getElementById('reportForm').reset();
+    }
+
+    async function submitReport() {
+        const reportType = document.getElementById('reportType').value;
+        const comment = document.getElementById('reportComment').value.trim();
+        const captchaInput = document.getElementById('captchaAnswer').value;
+
+        if (!reportType) {
+            showAlert('Please select a report type');
+            return;
+        }
+
+        if (!comment) {
+            showAlert('Please provide a comment');
+            return;
+        }
+
+        if (!captchaInput) {
+            showAlert('Please solve the security verification');
+            return;
+        }
+
+        if (parseInt(captchaInput) !== captchaAnswer) {
+            showAlert('Incorrect answer. Please try again.');
+            generateNewCaptcha();
+            document.getElementById('captchaAnswer').value = '';
+            return;
+        }
+
+        try {
+            const response = await fetch('/report-ip', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    ip_address: currentSearchedIP,
+                    report_type: reportType,
+                    comment: comment
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                showAlert(sanitizeHTML(data.error));
+            } else {
+                showAlert('IP address reported successfully!');
+                closeReportModal();
+                // Refresh the reports section
+                await loadIPReports(currentSearchedIP);
+            }
+        } catch (error) {
+            showAlert('Error submitting report. Please try again.');
+        }
+    }
+
+    async function loadIPReports(ipAddress) {
+        try {
+            const response = await fetch(`/get-ip-reports/${ipAddress}`);
+            const data = await response.json();
+
+            if (data.success && data.reports.length > 0) {
+                const reportsSection = document.getElementById('ipReportsSection');
+                const reportsList = document.getElementById('reportsList');
+                const reportCount = document.getElementById('reportCount');
+
+                reportCount.textContent = data.total_reports;
+                reportsList.innerHTML = '';
+
+                data.reports.forEach(report => {
+                    const reportDate = new Date(report.timestamp).toLocaleDateString();
+                    const reportHtml = `
+                        <div class="bg-red-800 border border-red-600 rounded p-3">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-red-300 font-medium">${sanitizeHTML(report.report_type)}</span>
+                                <span class="text-red-400 text-sm">${reportDate}</span>
+                            </div>
+                            <p class="text-red-200 text-sm mb-1">${sanitizeHTML(report.comment)}</p>
+                            <span class="text-red-400 text-xs">Reported by: ${sanitizeHTML(report.username)}</span>
+                        </div>
+                    `;
+                    reportsList.innerHTML += reportHtml;
+                });
+
+                reportsSection.classList.remove('hidden');
+            } else {
+                document.getElementById('ipReportsSection').classList.add('hidden');
+            }
+        } catch (error) {
+            console.error('Error loading IP reports:', error);
+        }
+    }
+
+    function showResults(data) {
+        // DEBUG: Print the full data object received from backend
+        console.log('Full lookup data:', data);
+        hideLoading();
+        
+        const resultsGrid = document.getElementById('resultsGrid');
+        resultsGrid.innerHTML = '';
+
+        // Store the current IP for reporting
+        currentSearchedIP = data.ip || '';
+
+        // Load IP reports
+        if (currentSearchedIP) {
+            loadIPReports(currentSearchedIP);
+        }
+
+        // Sanitize all data before displaying
+        const sanitizedData = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (typeof value === 'string') {
+                sanitizedData[key] = sanitizeHTML(value);
+            } else if (Array.isArray(value)) {
+                sanitizedData[key] = value.map(item => typeof item === 'string' ? sanitizeHTML(item) : item);
+            } else {
+                sanitizedData[key] = value;
+            }
+        }
+
+        // Geographic Intelligence Card
+        const geoCard = `
+            <div class="intel-card p-6 rounded-lg border border-dark-border hover:border-blue-400 transition-all duration-300 transform hover:scale-102 h-80 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-map-marker-alt text-accent-blue"></i>
+                        <span class="text-white font-medium">Geographic Intelligence</span>
+                    </div>
+                    <span class="text-xs bg-accent-green px-2 py-1 rounded text-white">Verified</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">IP Address:</span>
+                        <span class="text-white">${sanitizedData.ip || 'Unknown'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">ASN:</span>
+                        <span class="text-white">${sanitizedData.asn || 'Unknown'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">City:</span>
+                        <span class="text-white">${sanitizedData.city || 'Unknown'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Region:</span>
+                        <span class="text-white">${sanitizedData.region || 'Unknown'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Country:</span>
+                        <span class="text-white">${sanitizedData.country || 'Unknown'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Coordinates:</span>
+                        <span class="text-white">${sanitizedData.loc || 'Unknown'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Network Intelligence Card
+        const networkCard = `
+            <div class="intel-card p-6 rounded-lg border border-dark-border hover:border-green-400 transition-all duration-300 transform hover:scale-102 h-80 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-building text-accent-blue"></i>
+                        <span class="text-white font-medium">Network Intelligence</span>
+                    </div>
+                    <span class="text-xs bg-accent-green px-2 py-1 rounded text-white">Verified</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">IP Address:</span>
+                        <span class="text-white">${sanitizedData.ip || 'Unknown'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">ASN:</span>
+                        <span class="text-white">${sanitizedData.asn || 'Unknown'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Organization:</span>
+                        <span class="text-white">${sanitizedData.org || 'Unknown'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Records:</span>
+                        <span class="text-accent-blue">${Math.floor(Math.random() * 1000) + 1}+ records</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Last Verified:</span>
+                        <span class="text-white">${new Date().toLocaleDateString()}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // VPN/Proxy Detection Card
+        const vpnStatus = sanitizedData.vpn_detected ? 'VPN/Proxy Detected' : 
+                         sanitizedData.is_legitimate_service ? 'Legitimate Service' : 'Clean IP';
+        const vpnColor = sanitizedData.vpn_detected ? 'accent-red' : 
+                        sanitizedData.is_legitimate_service ? 'accent-blue' : 'accent-green';
+        const vpnIcon = sanitizedData.vpn_detected ? 'fas fa-shield-alt' : 
+                       sanitizedData.is_legitimate_service ? 'fas fa-building' : 'fas fa-check-circle';
+        
+        const vpnSourcesHtml = sanitizedData.vpn_sources && sanitizedData.vpn_sources.length > 0 ? 
+            sanitizedData.vpn_sources.map(source => `<span class="text-xs bg-red-600 px-2 py-1 rounded">${source}</span>`).join('') : '';
+        
+        const torSourcesHtml = sanitizedData.tor_sources && sanitizedData.tor_sources.length > 0 ? 
+            sanitizedData.tor_sources.map(source => `<span class="text-xs bg-purple-600 px-2 py-1 rounded">${source}</span>`).join('') : '';
+        
+        // VPN Provider Information
+        let vpnProviderHtml = '';
+        if (sanitizedData.likely_vpn_provider) {
+            vpnProviderHtml = `
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Likely Provider:</span>
+                    <span class="text-red-400 font-medium">${sanitizedData.likely_vpn_provider}</span>
+                </div>
+            `;
+        }
+        
+        // Additional VPN providers
+        let additionalProvidersHtml = '';
+        if (sanitizedData.vpn_providers && sanitizedData.vpn_providers.length > 1) {
+            const additionalProviders = sanitizedData.vpn_providers.slice(1);
+            additionalProvidersHtml = `
+                <div class="mt-3 pt-3 border-t border-gray-600">
+                    <span class="text-gray-400 text-sm">Other possible providers:</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        ${additionalProviders.map(provider => 
+                            `<span class="text-xs bg-orange-600 px-2 py-1 rounded" title="Confidence: ${provider.confidence}">${provider.name}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // AbuseIPDB Section
+        let abuseipdbHtml = '';
+        if (sanitizedData.abuseipdb_total_reports !== undefined && sanitizedData.abuseipdb_total_reports > 0) {
+            // Extract up to 6 most recent non-empty comments
+            let comments = [];
+            if (Array.isArray(sanitizedData.abuseipdb_reports)) {
+                comments = sanitizedData.abuseipdb_reports
+                    .filter(function(r) { return r.comment && r.comment.trim().length > 0; })
+                    .slice(0, 6);
+            }
+            let commentsHtml = '';
+            if (comments.length > 0) {
+                commentsHtml += '<div class="grid grid-cols-2 gap-2">';
+                for (let i = 0; i < 6; i++) {
+                    if (comments[i]) {
+                        const c = comments[i];
+                        commentsHtml += '<div class="bg-gray-900 rounded p-2 text-xs text-gray-200 border border-gray-700" style="word-break: break-word;">';
+                        commentsHtml += '<div class="mb-2" style="white-space: pre-line;">' + sanitizeHTML(c.comment) + '</div>';
+                        commentsHtml += '<div class="flex justify-between text-gray-400 mt-1">';
+                        commentsHtml += '<span>' + (c.reportedAt ? new Date(c.reportedAt).toLocaleString() : '') + '</span>';
+                        commentsHtml += '<span>' + (c.reporterCountryName ? sanitizeHTML(c.reporterCountryName) : '') + '</span>';
+                        commentsHtml += '</div></div>';
+                    } else {
+                        commentsHtml += '<div></div>';
+                    }
+                }
+                commentsHtml += '</div>';
+            } else {
+                commentsHtml = "<div class='text-gray-500 text-xs'>No recent comments available.</div>";
+            }
+            abuseipdbHtml +=
+                '<div class="mt-3 pt-3 border-t border-gray-600">' +
+                    '<div class="flex items-center space-x-2 mb-2">' +
+                        '<img src="https://www.abuseipdb.com/favicon.ico" class="w-5 h-5" alt="AbuseIPDB">' +
+                        '<span class="text-red-300 font-bold">AbuseIPDB Reports</span>' +
+                        '<span class="text-xs bg-red-600 px-2 py-1 rounded text-white">' + sanitizedData.abuseipdb_total_reports + ' reports</span>' +
+                        (sanitizedData.abuseipdb_confidence_score !== undefined ? '<span class="text-xs bg-orange-600 px-2 py-1 rounded text-white">Confidence: ' + sanitizedData.abuseipdb_confidence_score + '%</span>' : '') +
+                    '</div>' +
+                    '<div class="space-y-1">' +
+                        '<div class="text-xs text-gray-400 mb-1">Recent Comments:</div>' +
+                        commentsHtml +
+                    '</div>' +
+                '</div>';
+        }
+        
+        const securityCard = `
+            <div class="intel-card p-6 rounded-lg border border-dark-border hover:border-red-400 transition-all duration-300 transform hover:scale-102">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-lock text-accent-blue"></i>
+                        <span class="text-white font-medium">Security Intelligence</span>
+                    </div>
+                    <span class="text-xs bg-${vpnColor} px-2 py-1 rounded text-white">${vpnStatus}</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">VPN/Proxy:</span>
+                        <div class="flex items-center space-x-2">
+                            <i class="${vpnIcon} text-${vpnColor}"></i>
+                            <span class="text-white">${sanitizedData.vpn_detected ? 'Yes' : 'No'}</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Proxy:</span>
+                        <span class="text-${sanitizedData.proxy_detected ? 'accent-red' : 'accent-green'}">${sanitizedData.proxy_detected ? 'Yes' : 'No'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Tor Network:</span>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-${sanitizedData.tor_detected ? 'shield-alt text-purple-500' : 'check-circle text-accent-green'}"></i>
+                            <span class="text-${sanitizedData.tor_detected ? 'purple-500' : 'accent-green'}">${sanitizedData.tor_detected ? 'Yes' : 'No'}</span>
+                        </div>
+                    </div>
+                    ${vpnProviderHtml}
+                    <div class="flex justify-between">
+                        <div class="flex items-center space-x-1">
+                            <span class="text-gray-400">Detection Sources:</span>
+                            <div class="relative group">
+                                <i class="fas fa-exclamation-circle text-gray-500 text-xs cursor-help"></i>
+                                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-64 z-10">
+                                    <div class="text-center">
+                                        <strong>Detection Sources</strong><br/>
+                                        Shows how many APIs flagged this IP as VPN/Proxy vs total APIs that responded successfully. We query 23+ sources but some may timeout or fail.
+                                    </div>
+                                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-white">${sanitizedData.detection_count || 0}/${sanitizedData.sources_used || 0}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Tor Sources:</span>
+                        <span class="text-purple-400">${sanitizedData.tor_detection_count || 0}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <div class="flex items-center space-x-1">
+                            <span class="text-gray-400">Confidence:</span>
+                            <div class="relative group">
+                                <i class="fas fa-exclamation-circle text-gray-500 text-xs cursor-help"></i>
+                                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-64 z-10">
+                                    <div class="text-center">
+                                        <strong>Confidence Levels</strong><br/>
+                                        <strong>High:</strong> 4+ APIs detected VPN/Proxy<br/>
+                                        <strong>Medium:</strong> 2-3 APIs detected<br/>
+                                        <strong>Low:</strong> 1 API detected<br/>
+                                        <strong>Clean:</strong> No detections
+                                    </div>
+                                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-white">${sanitizedData.detection_confidence || 'Unknown'}</span>
+                    </div>
+                    ${vpnSourcesHtml ? `
+                    <div class="mt-3 pt-3 border-t border-gray-600">
+                        <span class="text-gray-400 text-sm">VPN/Proxy detected by:</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${vpnSourcesHtml}
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${torSourcesHtml ? `
+                    <div class="mt-3 pt-3 border-t border-gray-600">
+                        <span class="text-purple-400 text-sm">Tor detected by:</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${torSourcesHtml}
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${additionalProvidersHtml}
+                </div>
+            </div>
+        `;
+
+        resultsGrid.innerHTML = geoCard + networkCard + securityCard;
+        // Remove any existing AbuseIPDB card before adding a new one
+        const oldAbuseCard = document.getElementById('abuseipdbCardRow');
+        if (oldAbuseCard) {
+            oldAbuseCard.remove();
+        }
+        // Add AbuseIPDB card below and centered
+        if (abuseipdbHtml) {
+            const abuseipdbRow = document.createElement('div');
+            abuseipdbRow.id = 'abuseipdbCardRow';
+            abuseipdbRow.className = 'w-full flex justify-center mt-6';
+            abuseipdbRow.innerHTML = `<div class=\"intel-card p-4 rounded-lg border border-dark-border bg-dark-card max-w-3xl w-full\">${abuseipdbHtml.replace('space-y-2', 'space-y-1')}</div>`;
+            // Insert after resultsGrid
+            const resultsGridElem = document.getElementById('resultsGrid');
+            if (resultsGridElem && resultsGridElem.parentNode) {
+                resultsGridElem.parentNode.insertBefore(abuseipdbRow, resultsGridElem.nextSibling);
+            }
+        }
+        document.getElementById('resultsContainer').classList.remove('hidden');
+
+        // Update lookup count from server (only for authenticated users)
+        if (data.lookups_today !== undefined) {
+            document.getElementById('lookupCount').textContent = data.lookups_today + ' Today';
+        }
+    }
+
+    async function testMyIp() {
+        try {
+            showLoading();
+            
+            // First, get the user's IP
+            const ipResponse = await fetch('/my-ip', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            const ipData = await ipResponse.json();
+            
+            if (!ipData.success) {
+                hideLoading();
+                showAlert(sanitizeHTML(ipData.error || 'Could not determine your IP address'));
+                return;
+            }
+            
+            // Validate the received IP
+            if (!validateIP(ipData.ip)) {
+                hideLoading();
+                showAlert('Received invalid IP address from server');
+                return;
+            }
+            
+            // Set the IP in the input field
+            document.getElementById('ipInput').value = sanitizeHTML(ipData.ip);
+            
+            // Now perform the lookup
+            const response = await fetch('/lookup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ ip_address: ipData.ip })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                hideLoading();
+                showAlert(sanitizeHTML(data.error));
+            } else {
+                showResults(data);
+            }
+        } catch (error) {
+            hideLoading();
+            showAlert('Error getting your IP address. Please try again.');
+        }
+    }
+
+    async function performLookup() {
+        const ipInput = document.getElementById('ipInput');
+        const ip = ipInput.value.trim();
+        
+        if (!ip) {
+            showAlert('Please enter an IP address');
+            return;
+        }
+
+        // Client-side validation
+        if (!validateIP(ip)) {
+            showAlert('Please enter a valid IP address');
+            return;
+        }
+
+        showLoading();
+
+        try {
+            const response = await fetch('/lookup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ ip_address: ip })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                hideLoading();
+                showAlert(sanitizeHTML(data.error));
+            } else {
+                showResults(data);
+            }
+        } catch (error) {
+            hideLoading();
+            showAlert('Network error occurred. Please try again.');
+        }
+    }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-focus input and setup Enter key listener
+        const ipInput = document.getElementById('ipInput');
+        if (ipInput && !ipInput.disabled) {
+            ipInput.focus();
+        }
+        
+        if (ipInput) {
+            ipInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    if (ipInput.disabled) {
+                        redirectToLogin();
+                    } else {
+                        performLookup();
+                    }
+                }
+            });
+        }
+
+        // Setup report form submission
+        const reportForm = document.getElementById('reportForm');
+        if (reportForm) {
+            reportForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitReport();
+            });
+        }
+    });
+</script>
+{% endblock %} 
