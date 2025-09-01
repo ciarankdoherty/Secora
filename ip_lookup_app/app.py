@@ -73,7 +73,7 @@ class IPReport(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     try:
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
     except Exception as e:
         # If there's a schema error, return None to log out the user
         print(f"User loading error (schema mismatch): {e}")
