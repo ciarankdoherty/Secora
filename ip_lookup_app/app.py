@@ -11,7 +11,7 @@ import bcrypt
 import os
 from functools import wraps
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import ipaddress
 import threading
 from flask_socketio import SocketIO, emit, join_room
@@ -35,7 +35,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     is_active = db.Column(db.Boolean, default=True)
     
     def set_password(self, password):
@@ -56,7 +56,7 @@ class SearchHistory(db.Model):
     ip_address = db.Column(db.String(45), nullable=True)  # IPv4 or IPv6 (null for URL shortening)
     search_type = db.Column(db.String(20), default='ip_lookup')  # 'ip_lookup' or 'url_shorten'
     url_shortened = db.Column(db.Text, nullable=True)  # For URL shortening history
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.now(timezone.utc).date())
     
     user = db.relationship('User', backref=db.backref('searches', lazy=True))
 
@@ -66,7 +66,7 @@ class IPReport(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     report_type = db.Column(db.String(50), nullable=False)  # 'malicious', 'spam', 'suspicious', etc.
     comment = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.now(timezone.utc).date())
     
     user = db.relationship('User', backref=db.backref('reports', lazy=True))
 
@@ -717,8 +717,8 @@ def index():
     """Main page with IP lookup form"""
     lookups_today = 0
     if current_user.is_authenticated:
-        from datetime import datetime
-        today = datetime.utcnow().date()
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).date()
         lookups_today = SearchHistory.query.filter(
             SearchHistory.user_id == current_user.id,
             SearchHistory.search_type == 'ip_lookup',
@@ -825,8 +825,8 @@ def lookup():
                 )
                 db.session.add(search_record)
                 db.session.commit()
-                from datetime import datetime
-                today = datetime.utcnow().date()
+                from datetime import datetime, timezone
+                today = datetime.now(timezone.utc).date()
                 lookups_today = SearchHistory.query.filter(
                     SearchHistory.user_id == current_user.id,
                     SearchHistory.search_type == 'ip_lookup',
@@ -891,7 +891,7 @@ def report_ip():
             return jsonify({'error': 'Please provide a comment'}), 400
         
         # Check if user already reported this IP recently (within 24 hours)
-        yesterday = datetime.utcnow() - timedelta(days=1)
+        yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
         existing_report = IPReport.query.filter_by(
             user_id=current_user.id,
             ip_address=ip_address
@@ -2226,8 +2226,8 @@ def check_apple_nordvpn(ip_address):
 @login_required
 def lookup_count():
     try:
-        from datetime import datetime
-        today = datetime.utcnow().date()
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).date()
         lookups_today = SearchHistory.query.filter(
             SearchHistory.user_id == current_user.id,
             SearchHistory.search_type == 'ip_lookup',
