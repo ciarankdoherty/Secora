@@ -7,7 +7,8 @@ import re
 import concurrent.futures
 import time
 import html
-import bcrypt
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 import os
 from functools import wraps
 from collections import defaultdict, deque
@@ -40,12 +41,18 @@ class User(UserMixin, db.Model):
     
     def set_password(self, password):
         """Hash and set password"""
-        salt = bcrypt.gensalt()
-        self.password_hash = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+        self.password_hash = PasswordHasher().hash(password)
     
+
     def check_password(self, password):
         """Check if provided password matches hash"""
-        return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+        try:
+            PasswordHasher().verify(self.password_hash, password)
+            return True
+        except VerifyMismatchError:
+            return False
+        except Exception:
+            return False
     
     def __repr__(self):
         return f'<User {self.username}>'
